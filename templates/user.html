@@ -36,6 +36,30 @@
         padding: 0 20px;
       }
 
+      #nav {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+
+      #nav a {
+        background: linear-gradient(135deg, #00ff00 0%, #00dd00 100%);
+        color: black;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-block;
+      }
+
+      #nav a:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+      }
+
       h1 {
         font-size: 2.5rem;
         font-weight: 700;
@@ -229,12 +253,12 @@
     </style>
   </head>
   <body>
+    <div id="nav"><a href="/camera">📹 Camera Interface</a></div>
+
     <div id="header">
       <h1>🧠 NeuroVision</h1>
       <div id="connectionStatus">🟡 Connecting...</div>
     </div>
-
-    <div id="audioIndicator">🔊</div>
 
     <div id="status" class="standby">System Standby.<br />Tap to begin.</div>
 

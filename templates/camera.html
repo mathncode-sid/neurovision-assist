@@ -1,60 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NeuroVision - Eyes</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        body { margin: 0; background: black; color: white; font-family: sans-serif; overflow: hidden; }
-        video { width: 100vw; height: 100vh; object-fit: cover; }
-        #status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; font-weight: bold; z-index: 10; }
+      body {
+        margin: 0;
+        background: black;
+        color: white;
+        font-family: sans-serif;
+        overflow: hidden;
+      }
+      video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+      #status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        z-index: 10;
+      }
+      #nav {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+      }
+      #nav a {
+        background: rgba(0, 255, 0, 0.9);
+        color: black;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-block;
+      }
+      #nav a:hover {
+        background: rgba(0, 255, 0, 1);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="status">🟡 Connecting to Brain...</div>
-    
+    <div id="nav"><a href="/user">📢 Audio Interface</a></div>
+
     <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+    <canvas id="canvas" style="display: none"></canvas>
 
     <script>
-        const socket = io(); 
-        const statusDiv = document.getElementById('status');
+      const socket = io();
+      const statusDiv = document.getElementById("status");
 
-        socket.on('connect', () => {
-            statusDiv.innerText = "🟢 Connected: Streaming to Edge";
-            statusDiv.style.color = "#00ff00";
+      socket.on("connect", () => {
+        statusDiv.innerText = "🟢 Connected: Streaming to Edge";
+        statusDiv.style.color = "#00ff00";
+      });
+
+      socket.on("disconnect", () => {
+        statusDiv.innerText = "🔴 Disconnected from Edge";
+        statusDiv.style.color = "red";
+      });
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const context = canvas.getContext("2d");
+
+      // Force the browser to use the back camera
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" } })
+        .then((stream) => {
+          video.srcObject = stream;
+        })
+        .catch((err) => {
+          statusDiv.innerText = "❌ Camera Access Denied!";
+          statusDiv.style.color = "red";
         });
 
-        socket.on('disconnect', () => {
-            statusDiv.innerText = "🔴 Disconnected from Edge";
-            statusDiv.style.color = "red";
-        });
+      // The AI Heartbeat: Send a frame every 1000ms (1 FPS) with quality optimization
+      let isSending = false;
+      setInterval(() => {
+        if (
+          video.readyState === video.HAVE_ENOUGH_DATA &&
+          !isSending &&
+          socket.connected
+        ) {
+          isSending = true;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
+          // Compress to 30% quality JPEG + further resize to reduce payload
+          let frameData = canvas.toDataURL("image/jpeg", 0.3);
 
-        // Force the browser to use the back camera
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => {
-            statusDiv.innerText = "❌ Camera Access Denied!";
-            statusDiv.style.color = "red";
-        });
-
-        // The AI Heartbeat: Send a frame every 500ms (2 FPS)
-        setInterval(() => {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // Compress to 50% quality JPEG to keep the network lightning fast
-                let frameData = canvas.toDataURL('image/jpeg', 0.5);
-                socket.emit('video_frame', frameData);
-            }
-        }, 500);
+          socket.emit("video_frame", frameData, () => {
+            isSending = false;
+          });
+        }
+      }, 1000);
     </script>
-</body>
+  </body>
 </html>
