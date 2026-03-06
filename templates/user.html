@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroVision - Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { margin: 0; background: #121212; color: #ffffff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        h1 { font-size: 2rem; margin-bottom: 2rem; padding: 0 20px; }
+        #startBtn { background: #00ff00; color: black; border: none; padding: 25px 50px; font-size: 1.8rem; font-weight: bold; border-radius: 15px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,255,0,0.2); }
+        #startBtn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <h1 id="status">System Standby.<br>Tap to begin.</h1>
+    <button id="startBtn">START NAVIGATION</button>
+
+    <script>
+        const socket = io();
+        let isActive = false;
+        const statusText = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+
+        // Unlock the audio engine when the user taps start
+        startBtn.addEventListener('click', () => {
+            isActive = true;
+            statusText.innerText = "🟢 Smart Silence Active.\nScanning environment...";
+            startBtn.style.display = "none"; // Hide button once started
+            
+            // Announce startup
+            let startMsg = new SpeechSynthesisUtterance("Neuro vision navigation started.");
+            window.speechSynthesis.speak(startMsg);
+        });
+
+        // Listen for AI alerts from the laptop
+        socket.on('navigation_alert', function(data) {
+            if (isActive) {
+                statusText.innerText = "⚠️ " + data.message;
+                statusText.style.color = "#ff4444";
+                
+                // Speak the command out loud
+                let utterance = new SpeechSynthesisUtterance(data.message);
+                utterance.rate = 1.2; // Speak slightly faster for emergencies
+                window.speechSynthesis.speak(utterance);
+                
+                // Reset text color after a few seconds
+                setTimeout(() => {
+                    statusText.innerText = "🟢 Smart Silence Active.\nScanning environment...";
+                    statusText.style.color = "#ffffff";
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
