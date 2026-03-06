@@ -1,0 +1,14 @@
+neurovision-assist/
+│
+├── app.py                  # (Phase 2) The central Flask & Socket.IO server
+├── vision_engine.py        # (Phase 1) The YOLOv8 AI logic and math thresholds
+├── requirements.txt        # Your Python 3.13 dependencies list
+├── yolov8n.pt              # The pre-trained AI weights (Crucial for offline mode!)
+│
+├── templates/              # Flask requires HTML files to be in this exact folder
+│   ├── camera.html         # (Phase 3) Phone 1 UI: Accesses camera & streams frames
+│   └── user.html           # (Phase 4) Phone 2 UI: Dark-mode interface & Text-to-Speech
+│
+└── static/                 #  For clean frontend code
+    ├── style.css           # High-contrast CSS for your user.html button
+    └── beep.mp3            # (OA short chime to play before the AI speaks
